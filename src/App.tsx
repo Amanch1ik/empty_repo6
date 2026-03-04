@@ -1,13 +1,42 @@
-import { useState, useCallback, useEffect, Suspense } from 'react'
+import { useState, useCallback, useEffect, Suspense, Component, type ReactNode, type ErrorInfo } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment, ContactShadows } from '@react-three/drei'
-import { Shirt } from 'lucide-react'
+import { ShoppingBag } from 'lucide-react'
 import * as THREE from 'three'
 import Character from './components/Character'
-import ClothingPanel from './components/ClothingPanel'
-import { type Preset } from './data/presets'
-import { saveConfig, loadConfig } from './utils/storage'
+import Sidebar, { type Step } from './components/Sidebar'
+import LookGallery from './components/LookGallery'
+import BuyPanel from './components/BuyPanel'
+import { type Preset, type CharacterPreset } from './data/presets'
+import { type ClothingItem } from './data/clothing'
+import {
+  saveConfig, loadConfig, saveLook, loadLooks, deleteLook,
+  generateId, type SavedLook
+} from './utils/storage'
 
+/* ---------- Error Boundary for 3D Canvas ---------- */
+interface EBProps { children: ReactNode }
+interface EBState { hasError: boolean; error?: Error }
+
+class CanvasErrorBoundary extends Component<EBProps, EBState> {
+  state: EBState = { hasError: false }
+  static getDerivedStateFromError(error: Error) { return { hasError: true, error } }
+  componentDidCatch(error: Error, info: ErrorInfo) { console.error('3D Canvas error:', error, info) }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#ff4696', gap: 12, padding: 40 }}>
+          <span style={{ fontSize: 48 }}>🎮</span>
+          <h2 style={{ fontSize: 18, fontWeight: 600 }}>WebGL не поддерживается</h2>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>Для просмотра 3D-модели откройте в Chrome, Firefox или Edge</p>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
+/* ---------- 3D Loader ---------- */
 function Loader() {
   return (
     <mesh>
@@ -17,18 +46,29 @@ function Loader() {
   )
 }
 
+/* ---------- Defaults ---------- */
 const defaults = {
   colors: { topColor: '#1a1a40', bottomColor: '#3d1a40', shoeColor: '#2a1a3a' },
   toggles: { showJacket: false, showHair: true, showGlasses: true },
 }
 
+/* ---------- App ---------- */
 export default function App() {
   const saved = loadConfig()
 
+  const [step, setStep] = useState<Step>('character')
   const [colors, setColors] = useState(saved?.colors ?? defaults.colors)
   const [toggles, setToggles] = useState(saved?.toggles ?? defaults.toggles)
+  const [selectedCharacter, setSelectedCharacter] = useState(saved?.selectedCharacter ?? '')
+  const [selectedItems, setSelectedItems] = useState<string[]>([])
+  const [looks, setLooks] = useState<SavedLook[]>(loadLooks())
+  const [showGallery, setShowGallery] = useState(false)
+  const [showBuyPanel, setShowBuyPanel] = useState(false)
+  const [buyItems, setBuyItems] = useState<string[]>([])
 
-  useEffect(() => { saveConfig({ colors, toggles }) }, [colors, toggles])
+  useEffect(() => {
+    saveConfig({ colors, toggles, selectedCharacter })
+  }, [colors, toggles, selectedCharacter])
 
   const changeColor = useCallback((key: string, val: string) => {
     setColors(prev => ({ ...prev, [key]: val }))
@@ -43,83 +83,185 @@ export default function App() {
     setToggles({ ...p.toggles })
   }, [])
 
+  const selectCharacter = useCallback((cp: CharacterPreset) => {
+    setSelectedCharacter(cp.id)
+    setColors({ ...cp.colors })
+    setToggles({ ...cp.toggles })
+  }, [])
+
+  const selectItem = useCallback((item: ClothingItem) => {
+    if (item.category === 'accessory') {
+      setToggles(prev => ({ ...prev, [item.colorKey]: !prev[item.colorKey as keyof typeof prev] }))
+    } else if (item.color) {
+      setColors(prev => ({ ...prev, [item.colorKey]: item.color }))
+    }
+
+    setSelectedItems(prev =>
+      prev.includes(item.id)
+        ? prev.filter(id => id !== item.id)
+        : [...prev, item.id]
+    )
+  }, [])
+
   const screenshot = useCallback(() => {
     const canvas = document.querySelector('canvas')
     if (!canvas) return
     requestAnimationFrame(() => {
       const link = document.createElement('a')
-      link.download = `wardrobe-${Date.now()}.png`
+      link.download = `vogueverse-${Date.now()}.png`
       link.href = canvas.toDataURL('image/png')
       link.click()
     })
   }, [])
 
+  const handleSaveLook = useCallback(() => {
+    const canvas = document.querySelector('canvas')
+    let screenshotData: string | undefined
+    if (canvas) {
+      try { screenshotData = canvas.toDataURL('image/png') } catch {}
+    }
+
+    const look: SavedLook = {
+      id: generateId(),
+      name: `Образ ${looks.length + 1}`,
+      timestamp: Date.now(),
+      colors: { ...colors },
+      toggles: { ...toggles },
+      selectedItems: [...selectedItems],
+      screenshot: screenshotData,
+    }
+
+    saveLook(look)
+    setLooks(loadLooks())
+  }, [colors, toggles, selectedItems, looks.length])
+
+  const handleDeleteLook = useCallback((id: string) => {
+    deleteLook(id)
+    setLooks(loadLooks())
+  }, [])
+
+  const handleApplyLook = useCallback((look: SavedLook) => {
+    setColors({ ...look.colors })
+    setToggles({ ...look.toggles })
+    setSelectedItems([...look.selectedItems])
+    setShowGallery(false)
+  }, [])
+
+  const handleBuyLook = useCallback((look: SavedLook) => {
+    setBuyItems(look.selectedItems)
+    setShowGallery(false)
+    setShowBuyPanel(true)
+  }, [])
+
+  const handleBuyCurrent = useCallback(() => {
+    setBuyItems(selectedItems)
+    setShowBuyPanel(true)
+  }, [selectedItems])
+
   return (
-    <>
-      <header className="top-bar">
-        <div className="logo">
-          <Shirt size={20} strokeWidth={1.8} />
-          <span>Гардероб</span>
-        </div>
-      </header>
-
-      <div className="scene-container">
-        <Canvas
-          camera={{ position: [0, 0.7, 3], fov: 30 }}
-          dpr={[1, 2]}
-          gl={{ antialias: true, alpha: false, preserveDrawingBuffer: true }}
-          onCreated={({ gl }) => {
-            gl.setClearColor('#0e0e14')
-            gl.toneMapping = THREE.ACESFilmicToneMapping
-            gl.toneMappingExposure = 1.3
-          }}
-        >
-          <ambientLight intensity={0.6} />
-          <directionalLight position={[3, 6, 5]} intensity={1.6} castShadow />
-          <directionalLight position={[-4, 4, -2]} intensity={0.5} color="#c4b5fd" />
-          <pointLight position={[0, 2.5, 2]} intensity={0.5} color="#e8e0ff" />
-
-          <Suspense fallback={<Loader />}>
-            <Character
-              topColor={colors.topColor}
-              bottomColor={colors.bottomColor}
-              shoeColor={colors.shoeColor}
-              showJacket={toggles.showJacket}
-              showHair={toggles.showHair}
-              showGlasses={toggles.showGlasses}
-            />
-            <Environment preset="city" />
-          </Suspense>
-
-          <ContactShadows
-            position={[0, -0.851, 0]}
-            opacity={0.3}
-            scale={2}
-            blur={3}
-            far={2}
-            resolution={256}
-          />
-
-          <OrbitControls
-            enablePan={false}
-            enableZoom={true}
-            minDistance={1.5}
-            maxDistance={6}
-            minPolarAngle={Math.PI * 0.1}
-            maxPolarAngle={Math.PI * 0.75}
-            target={[0, 0.5, 0]}
-          />
-        </Canvas>
-      </div>
-
-      <ClothingPanel
+    <div className="app-layout">
+      <Sidebar
+        step={step}
+        onStepChange={setStep}
         colors={colors}
         toggles={toggles}
+        selectedCharacter={selectedCharacter}
+        selectedItems={selectedItems}
         onColorChange={changeColor}
         onToggle={toggle}
         onPreset={applyPreset}
+        onCharacterSelect={selectCharacter}
+        onItemSelect={selectItem}
+        onSaveLook={handleSaveLook}
         onScreenshot={screenshot}
+        onShowLooks={() => setShowGallery(true)}
+        savedLooksCount={looks.length}
       />
-    </>
+
+      <div className="scene-container">
+        {/* Watermark */}
+        <div className="scene-watermark">
+          <span className="watermark-text">
+            Vogue<span className="watermark-accent">Verse</span>
+          </span>
+        </div>
+
+        <CanvasErrorBoundary>
+          <Canvas
+            camera={{ position: [0, 0.7, 3], fov: 30 }}
+            dpr={[1, 2]}
+            gl={{ antialias: true, alpha: false, preserveDrawingBuffer: true }}
+            onCreated={({ gl }) => {
+              gl.setClearColor('#0a0a0f')
+              gl.toneMapping = THREE.ACESFilmicToneMapping
+              gl.toneMappingExposure = 1.3
+            }}
+          >
+            <ambientLight intensity={0.6} />
+            <directionalLight position={[3, 6, 5]} intensity={1.6} castShadow />
+            <directionalLight position={[-4, 4, -2]} intensity={0.5} color="#ffb6c1" />
+            <pointLight position={[0, 2.5, 2]} intensity={0.5} color="#ffe0ec" />
+
+            <Suspense fallback={<Loader />}>
+              <Character
+                topColor={colors.topColor}
+                bottomColor={colors.bottomColor}
+                shoeColor={colors.shoeColor}
+                showJacket={toggles.showJacket}
+                showHair={toggles.showHair}
+                showGlasses={toggles.showGlasses}
+              />
+              <Environment preset="city" />
+            </Suspense>
+
+            <ContactShadows
+              position={[0, -0.851, 0]}
+              opacity={0.3}
+              scale={2}
+              blur={3}
+              far={2}
+              resolution={256}
+            />
+
+            <OrbitControls
+              enablePan={false}
+              enableZoom={true}
+              minDistance={1.5}
+              maxDistance={6}
+              minPolarAngle={Math.PI * 0.1}
+              maxPolarAngle={Math.PI * 0.75}
+              target={[0, 0.5, 0]}
+            />
+          </Canvas>
+        </CanvasErrorBoundary>
+
+        {/* Floating Buy Button */}
+        {selectedItems.length > 0 && (
+          <button className="buy-float-btn" onClick={handleBuyCurrent}>
+            <ShoppingBag size={18} />
+            <span>Купить образ</span>
+            <span className="buy-float-count">{selectedItems.length}</span>
+          </button>
+        )}
+      </div>
+
+      {/* Modals */}
+      {showGallery && (
+        <LookGallery
+          looks={looks}
+          onApply={handleApplyLook}
+          onDelete={handleDeleteLook}
+          onBuy={handleBuyLook}
+          onClose={() => setShowGallery(false)}
+        />
+      )}
+
+      {showBuyPanel && (
+        <BuyPanel
+          itemIds={buyItems}
+          onClose={() => setShowBuyPanel(false)}
+        />
+      )}
+    </div>
   )
 }
