@@ -1,122 +1,157 @@
-import { Shirt, PaintBucket, Footprints, MousePointer2 } from 'lucide-react';
+import { useState, useRef } from 'react'
+import {
+  Shirt, PaintBucket, Footprints, MousePointer2,
+  Camera, Sparkles, Dumbbell, Briefcase, Flame,
+  ChevronUp, ChevronDown,
+} from 'lucide-react'
+import { PRESETS, COLOR_OPTIONS, type Preset } from '../data/presets'
 
-interface ColorOption {
-  name: string;
-  value: string;
+const PRESET_ICONS: Record<string, React.ReactNode> = {
+  shirt: <Shirt size={20} strokeWidth={1.5} />,
+  dumbbell: <Dumbbell size={20} strokeWidth={1.5} />,
+  briefcase: <Briefcase size={20} strokeWidth={1.5} />,
+  flame: <Flame size={20} strokeWidth={1.5} />,
 }
 
-interface ColorGroup {
-  key: string;
-  label: string;
-  icon: React.ReactNode;
-  colors: ColorOption[];
+const TOGGLES = [
+  { key: 'showJacket', label: 'Куртка' },
+  { key: 'showHair', label: 'Волосы' },
+  { key: 'showGlasses', label: 'Очки' },
+]
+
+const COLOR_ICONS: Record<string, React.ReactNode> = {
+  topColor: <Shirt size={14} strokeWidth={1.6} />,
+  bottomColor: <PaintBucket size={14} strokeWidth={1.6} />,
+  shoeColor: <Footprints size={14} strokeWidth={1.6} />,
 }
 
-interface ToggleItem {
-  key: string;
-  label: string;
+const COLOR_LABELS: Record<string, string> = {
+  topColor: 'Верх',
+  bottomColor: 'Брюки',
+  shoeColor: 'Обувь',
 }
 
-interface ClothingPanelProps {
-  colors: Record<string, string>;
-  toggles: Record<string, boolean>;
-  onColorChange: (key: string, color: string) => void;
-  onToggle: (key: string) => void;
+interface Props {
+  colors: Record<string, string>
+  toggles: Record<string, boolean>
+  onColorChange: (key: string, val: string) => void
+  onToggle: (key: string) => void
+  onPreset: (p: Preset) => void
+  onScreenshot: () => void
 }
-
-const colorGroups: ColorGroup[] = [
-  {
-    key: 'topColor',
-    label: 'Top',
-    icon: <Shirt size={16} strokeWidth={1.6} />,
-    colors: [
-      { name: 'Navy', value: '#1a1a40' },
-      { name: 'Crimson', value: '#8b1a1a' },
-      { name: 'Forest', value: '#1a3a1a' },
-      { name: 'White', value: '#e8e8e8' },
-    ],
-  },
-  {
-    key: 'bottomColor',
-    label: 'Pants',
-    icon: <PaintBucket size={16} strokeWidth={1.6} />,
-    colors: [
-      { name: 'Purple', value: '#3d1a40' },
-      { name: 'Black', value: '#111111' },
-      { name: 'Olive', value: '#3a3a1a' },
-      { name: 'Denim', value: '#1a2a4a' },
-    ],
-  },
-  {
-    key: 'shoeColor',
-    label: 'Shoes',
-    icon: <Footprints size={16} strokeWidth={1.6} />,
-    colors: [
-      { name: 'Default', value: '#2a1a3a' },
-      { name: 'White', value: '#e0e0e0' },
-      { name: 'Red', value: '#7a1a1a' },
-      { name: 'Black', value: '#0a0a0a' },
-    ],
-  },
-];
-
-const toggleItems: ToggleItem[] = [
-  { key: 'showJacket', label: 'Jacket' },
-  { key: 'showHair', label: 'Hair' },
-  { key: 'showGlasses', label: 'Glasses' },
-];
 
 export default function ClothingPanel({
-  colors, toggles, onColorChange, onToggle,
-}: ClothingPanelProps) {
+  colors, toggles, onColorChange, onToggle, onPreset, onScreenshot,
+}: Props) {
+  const [open, setOpen] = useState(false)
+  const [tab, setTab] = useState<'wardrobe' | 'presets'>('wardrobe')
+  const [pickerKey, setPickerKey] = useState<string | null>(null)
+  const pickerRef = useRef<HTMLInputElement>(null)
+
+  const openPicker = (key: string) => {
+    setPickerKey(key)
+    setTimeout(() => pickerRef.current?.click(), 50)
+  }
+
   return (
-    <aside className="controls-panel">
-      {/* ── Toggle Section ──────────────────── */}
-      <div className="panel-section">
-        <span className="section-title">Wardrobe</span>
-        <div className="toggle-row">
-          {toggleItems.map((item) => {
-            const active = toggles[item.key];
-            return (
-              <button
-                key={item.key}
-                className={`pill-btn${active ? ' active' : ''}`}
-                onClick={() => onToggle(item.key)}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+    <div className="panel-wrapper">
+      <button className={`panel-toggle-btn${open ? ' open' : ''}`} onClick={() => setOpen(v => !v)}>
+        {open ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+        <span>{open ? 'Скрыть' : 'Настроить'}</span>
+      </button>
 
-      <div className="panel-divider" />
-
-      {/* ── Color Section ───────────────────── */}
-      {colorGroups.map((group) => (
-        <div key={group.key} className="color-group">
-          <div className="color-group-header">
-            <div className="toggle-icon">{group.icon}</div>
-            <span className="toggle-label">{group.label}</span>
+      <aside className={`controls-panel${open ? ' open' : ''}`}>
+        <div className="panel-content">
+          <div className="tab-row">
+            <button className={`tab-btn${tab === 'wardrobe' ? ' active' : ''}`} onClick={() => setTab('wardrobe')}>
+              Гардероб
+            </button>
+            <button className={`tab-btn${tab === 'presets' ? ' active' : ''}`} onClick={() => setTab('presets')}>
+              <Sparkles size={13} /> Стили
+            </button>
           </div>
-          <div className="color-swatches">
-            {group.colors.map((c) => (
-              <button
-                key={c.value}
-                className={`swatch${colors[group.key] === c.value ? ' active' : ''}`}
-                style={{ backgroundColor: c.value }}
-                onClick={() => onColorChange(group.key, c.value)}
-                title={c.name}
-              />
-            ))}
+
+          <div className="panel-divider" />
+
+          {tab === 'wardrobe' ? (
+            <>
+              <div className="toggle-row">
+                {TOGGLES.map(t => (
+                  <button
+                    key={t.key}
+                    className={`pill-btn${toggles[t.key] ? ' active' : ''}`}
+                    onClick={() => onToggle(t.key)}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="panel-divider" />
+
+              <div className="color-groups-row">
+                {['topColor', 'bottomColor', 'shoeColor'].map(key => (
+                  <div key={key} className="color-group">
+                    <div className="color-group-header">
+                      <div className="toggle-icon">{COLOR_ICONS[key]}</div>
+                      <span className="toggle-label">{COLOR_LABELS[key]}</span>
+                    </div>
+                    <div className="color-swatches">
+                      {COLOR_OPTIONS[key].map(c => (
+                        <button
+                          key={c.value}
+                          className={`swatch${colors[key] === c.value ? ' active' : ''}`}
+                          style={{ backgroundColor: c.value }}
+                          onClick={() => onColorChange(key, c.value)}
+                          title={c.name}
+                        />
+                      ))}
+                      <button className="swatch swatch-custom" onClick={() => openPicker(key)} title="Свой цвет">
+                        +
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="presets-grid">
+              {PRESETS.map(p => (
+                <button key={p.name} className="preset-card" onClick={() => onPreset(p)}>
+                  <span className="preset-icon">{PRESET_ICONS[p.icon]}</span>
+                  <span className="preset-name">{p.name}</span>
+                  <div className="preset-colors">
+                    {Object.values(p.colors).map((c, i) => (
+                      <span key={i} className="preset-dot" style={{ backgroundColor: c }} />
+                    ))}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="panel-divider" />
+
+          <div className="actions-row">
+            <button className="action-btn" onClick={onScreenshot}>
+              <Camera size={14} />
+              <span>Скриншот</span>
+            </button>
+            <div className="panel-hint">
+              <MousePointer2 size={11} />
+              <span>Вращайте</span>
+            </div>
           </div>
         </div>
-      ))}
 
-      <div className="panel-hint">
-        <MousePointer2 size={12} />
-        <span>Drag to rotate</span>
-      </div>
-    </aside>
-  );
+        <input
+          ref={pickerRef}
+          type="color"
+          className="hidden-color-input"
+          value={pickerKey ? colors[pickerKey] || '#fff' : '#fff'}
+          onChange={e => { if (pickerKey) onColorChange(pickerKey, e.target.value) }}
+        />
+      </aside>
+    </div>
+  )
 }
