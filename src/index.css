@@ -7,23 +7,23 @@
 }
 
 :root {
-  --bg: #0a0a0f;
-  --surface: rgba(255, 255, 255, 0.04);
-  --surface-hover: rgba(255, 255, 255, 0.08);
+  --bg: #ffffff;
+  --surface: rgba(0, 0, 0, 0.04);
+  --surface-hover: rgba(0, 0, 0, 0.08);
   --surface-active: rgba(255, 70, 150, 0.1);
-  --border: rgba(255, 255, 255, 0.06);
-  --border-hover: rgba(255, 255, 255, 0.12);
-  --text-primary: #f0f0f2;
-  --text-secondary: rgba(255, 255, 255, 0.45);
-  --text-muted: rgba(255, 255, 255, 0.25);
+  --border: rgba(0, 0, 0, 0.1);
+  --border-hover: rgba(0, 0, 0, 0.15);
+  --text-primary: #111111;
+  --text-secondary: rgba(0, 0, 0, 0.65);
+  --text-muted: rgba(0, 0, 0, 0.4);
   --accent: #ff4696;
-  --accent-light: #ff69b4;
-  --accent-dim: rgba(255, 70, 150, 0.12);
-  --accent-border: rgba(255, 70, 150, 0.3);
-  --accent-glow: rgba(255, 70, 150, 0.2);
-  --success: #34d399;
-  --sidebar-width: 340px;
-  --sidebar-bg: rgba(10, 10, 18, 0.92);
+  --accent-light: #e03d82;
+  --accent-dim: rgba(255, 70, 150, 0.08);
+  --accent-border: rgba(255, 70, 150, 0.4);
+  --accent-glow: rgba(255, 70, 150, 0.15);
+  --success: #10b981;
+  --sidebar-width: 320px;
+  --sidebar-bg: rgba(255, 255, 255, 0.9);
 }
 
 html, body, #root {
@@ -55,11 +55,10 @@ html, body, #root {
   width: var(--sidebar-width);
   height: 100vh;
   background: var(--sidebar-bg);
-  backdrop-filter: blur(40px) saturate(1.8);
+  backdrop-filter: blur(20px);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   position: relative;
   z-index: 10;
   transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
@@ -72,20 +71,21 @@ html, body, #root {
 
 .sidebar-collapse-btn {
   position: absolute;
-  top: 16px;
-  right: -14px;
-  width: 28px;
-  height: 28px;
+  top: 32px;
+  right: -16px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 1px solid var(--border);
-  background: var(--bg);
+  background: #ffffff;
   color: var(--text-secondary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 20;
+  z-index: 100;
   transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 .sidebar-collapse-btn:hover {
   background: var(--surface-hover);
@@ -95,17 +95,20 @@ html, body, #root {
 
 /* Logo */
 .sidebar-logo {
-  padding: 24px 24px 16px;
+  padding: 32px 24px 20px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  align-items: center;
+  text-align: center;
 }
 
 .logo-text {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
   color: var(--text-primary);
+  line-height: 1;
 }
 
 .logo-accent {
@@ -113,19 +116,18 @@ html, body, #root {
 }
 
 .logo-sub {
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.15em;
   color: var(--text-muted);
 }
 
-/* Step Navigation */
 .step-nav {
   display: flex;
-  gap: 2px;
+  gap: 4px;
   padding: 0 16px;
-  margin-bottom: 4px;
+  margin-bottom: 12px;
 }
 
 .step-btn {
@@ -133,31 +135,42 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 10px 4px 8px;
-  border-radius: 10px;
+  gap: 6px;
+  padding: 12px 4px;
+  border-radius: 12px;
   border: 1px solid transparent;
   background: transparent;
   color: var(--text-secondary);
   font-family: inherit;
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   outline: none;
   position: relative;
 }
 
 .step-btn:hover {
-  background: var(--surface-hover);
+  background: var(--surface);
   color: var(--text-primary);
 }
 
 .step-btn.active {
-  background: var(--accent-dim);
-  border-color: var(--accent-border);
+  background: var(--bg);
+  border-color: var(--border);
   color: var(--accent);
-  box-shadow: 0 0 20px var(--accent-glow);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.step-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 15%;
+  right: 15%;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 4px 4px 0 0;
 }
 
 .step-btn.done {
@@ -193,27 +206,28 @@ html, body, #root {
 
 /* Progress bar */
 .step-progress {
-  height: 2px;
-  margin: 0 16px 12px;
+  height: 3px;
+  margin: 0 16px 16px;
   background: var(--surface);
-  border-radius: 1px;
+  border-radius: 2px;
   overflow: hidden;
 }
 
 .step-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent), var(--accent-light));
-  border-radius: 1px;
-  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Step Content */
 .step-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 0 16px 16px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.08) transparent;
+  scrollbar-color: rgba(0,0,0,0.08) transparent;
 }
 
 .step-content::-webkit-scrollbar { width: 4px; }
@@ -222,6 +236,7 @@ html, body, #root {
 
 .step-section {
   animation: fadeSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  padding-bottom: 40px;
 }
 
 @keyframes fadeSlideIn {
@@ -230,52 +245,56 @@ html, body, #root {
 }
 
 .section-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
   letter-spacing: -0.02em;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
+  color: var(--text-primary);
 }
 
 .section-desc {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-secondary);
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  line-height: 1.4;
 }
 
 /* Character Grid */
 .character-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 12px;
 }
 
 .character-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 16px 10px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: var(--surface);
+  justify-content: space-between;
+  gap: 8px;
+  padding: 20px 12px;
+  border-radius: 16px;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s ease;
   outline: none;
   color: var(--text-primary);
   font-family: inherit;
+  min-height: 160px;
 }
 
 .character-card:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-hover);
+  border-color: var(--accent-border);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.06);
 }
 
 .character-card.active {
-  border-color: var(--accent-border);
-  background: var(--accent-dim);
-  box-shadow: 0 0 24px var(--accent-glow), inset 0 0 0 1px var(--accent-border);
+  border-color: var(--accent);
+  background: #fff;
+  box-shadow: 0 8px 32px var(--accent-glow);
+  transform: translateY(-2px);
 }
 
 .char-emoji {
@@ -284,15 +303,16 @@ html, body, #root {
 }
 
 .char-name {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .char-desc {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--text-secondary);
   text-align: center;
-  line-height: 1.3;
+  line-height: 1.4;
+  margin: 4px 0;
 }
 
 .char-colors {
@@ -684,7 +704,7 @@ html, body, #root {
   width: 90%;
   max-width: 520px;
   max-height: 80vh;
-  background: rgba(16, 16, 24, 0.98);
+  background: #ffffff;
   border: 1px solid var(--border);
   border-radius: 20px;
   overflow: hidden;
@@ -962,8 +982,8 @@ html, body, #root {
 
 .scene-watermark {
   position: absolute;
-  top: 24px;
-  left: 24px;
+  bottom: 32px;
+  left: 32px;
   z-index: 5;
   pointer-events: none;
 }
@@ -972,7 +992,7 @@ html, body, #root {
   font-size: 28px;
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: rgba(255, 255, 255, 0.06);
+  color: rgba(0, 0, 0, 0.05);
 }
 
 .watermark-accent {
@@ -1037,7 +1057,7 @@ html, body, #root {
 
 /* ===== RESPONSIVE ===== */
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .app-layout {
     flex-direction: column;
   }
@@ -1065,7 +1085,7 @@ html, body, #root {
   }
 
   .character-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: 1fr 1fr;
   }
 
   .buy-float-btn {

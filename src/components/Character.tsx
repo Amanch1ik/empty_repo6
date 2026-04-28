@@ -119,7 +119,7 @@ export default function Character({
     const t = state.clock.getElapsedTime()
 
     group.current.rotation.y = Math.sin(t * 0.5) * 0.06
-    group.current.scale.setY(1 + Math.sin(t * 1.2) * 0.003)
+    group.current.scale.set(1.15, 1.15 + Math.sin(t * 1.2) * 0.002, 1.15)
 
     // blink
     const ref = meshes.current
@@ -141,7 +141,7 @@ export default function Character({
   })
 
   return (
-    <group ref={group} position={[0, -0.85, 0]}>
+    <group ref={group} position={[0, -1.1, 0]}>
       <primitive object={model} />
     </group>
   )

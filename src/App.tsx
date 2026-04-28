@@ -188,19 +188,19 @@ export default function App() {
 
         <CanvasErrorBoundary>
           <Canvas
-            camera={{ position: [0, 0.7, 3], fov: 30 }}
+            camera={{ position: [0, 0.7, 4], fov: 35 }}
             dpr={[1, 2]}
-            gl={{ antialias: true, alpha: false, preserveDrawingBuffer: true }}
+            gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
             onCreated={({ gl }) => {
-              gl.setClearColor('#0a0a0f')
+              gl.setClearColor('#ffffff')
               gl.toneMapping = THREE.ACESFilmicToneMapping
-              gl.toneMappingExposure = 1.3
+              gl.toneMappingExposure = 1.1
             }}
           >
-            <ambientLight intensity={0.6} />
-            <directionalLight position={[3, 6, 5]} intensity={1.6} castShadow />
-            <directionalLight position={[-4, 4, -2]} intensity={0.5} color="#ffb6c1" />
-            <pointLight position={[0, 2.5, 2]} intensity={0.5} color="#ffe0ec" />
+            <ambientLight intensity={1.2} />
+            <directionalLight position={[5, 5, 5]} intensity={1.5} castShadow />
+            <directionalLight position={[-5, 5, -5]} intensity={0.8} color="#ffffff" />
+            <pointLight position={[0, 3, 2]} intensity={0.6} />
 
             <Suspense fallback={<Loader />}>
               <Character
@@ -215,22 +215,22 @@ export default function App() {
             </Suspense>
 
             <ContactShadows
-              position={[0, -0.851, 0]}
+              position={[0, -1.11, 0]}
               opacity={0.3}
-              scale={2}
-              blur={3}
-              far={2}
+              scale={2.5}
+              blur={2}
+              far={1.5}
               resolution={256}
             />
 
             <OrbitControls
               enablePan={false}
               enableZoom={true}
-              minDistance={1.5}
+              minDistance={1.8}
               maxDistance={6}
               minPolarAngle={Math.PI * 0.1}
               maxPolarAngle={Math.PI * 0.75}
-              target={[0, 0.5, 0]}
+              target={[0, 0, 0]}
             />
           </Canvas>
         </CanvasErrorBoundary>
